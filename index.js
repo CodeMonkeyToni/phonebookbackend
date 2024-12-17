@@ -1,23 +1,13 @@
+require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 var morgan = require('morgan')
 const app = express()
+const Person = require('./models/person')
 
 app.use(express.json())
 app.use(cors())
 app.use(express.static('dist'))
-
-// app.use((req, res, next) => {
-//     res.setHeader('Content-Security-Policy', 
-//         "default-src 'none'; " +  // Estä kaikki lähteet oletuksena
-//         "script-src 'self' 'unsafe-inline'; " + // Salli skriptit vain omasta lähteestä ja inline-skriptit
-//         "style-src 'self' 'unsafe-inline'; " +  // Salli tyylit vain omasta lähteestä ja inline-tyylit
-//         "img-src 'self'; " +  // Salli kuvat vain omasta lähteestä
-//         "font-src 'self'; " + // Salli fontit vain omasta lähteestä
-//         "connect-src 'self'; " + // Salli yhteydet omasta lähteestä
-//         "worker-src 'self';");  // Salli työntekijät omasta lähteestä
-//     next();
-// })
 
 morgan.token('data', function (req, res) {
     return JSON.stringify(req.body)
@@ -62,7 +52,9 @@ let persons = [
 ]
 
 app.get("/api/persons", (request, response) => {
-    response.json(persons)
+    Person.find({}).then(result => {
+        response.json(result)
+    })
 })
 
 app.get("/info", (request, response) => {
@@ -73,13 +65,16 @@ app.get("/info", (request, response) => {
 })
 
 app.get("/api/persons/:id", (request, response) => {
-    const id = request.params.id
-    const person = persons.find(person => person.id === id)
+    Person.findById(request.params.id).then(person => {
+        response.json(person)
+    })
+    // const id = request.params.id
+    // const person = persons.find(person => person.id === id)
 
-    if (!person) {
-        return response.status(404).end()
-    }
-    response.json(person)
+    // if (!person) {
+    //     return response.status(404).end()
+    // }
+    // response.json(person)
 })
 
 app.delete("/api/persons/:id", (request, response) => {
@@ -90,28 +85,42 @@ app.delete("/api/persons/:id", (request, response) => {
 })
 
 app.post("/api/persons", (request, response) => {
-    const id = Math.floor(Math.random()*10000).toString()
+    const body = request.body
 
-    if (!request.body.name || !request.body.number) {
-        return response.status(400).json({
-            error: "content missing"
-        })
+    if (body.content === undefined) {
+        return response.status(400).json({ error: 'content missing' })
     }
 
-    if (persons.find(person => person.name === request.body.name))  {
-        return response.status(400).json({
-            error: "name must be unique"
-        })
-    }
+    const person = new Person({
+        name: body.name,
+        number: body.number,
+      })
+    
+    person.save().then(savedPerson => {
+        response.json(savedPerson)
+    })
+    // const id = Math.floor(Math.random()*10000).toString()
 
-    const newPerson = {
-        id: id,
-        name: request.body.name,
-        number: request.body.number
-    }
-    persons.push(newPerson)
-    console.log(persons)
-    response.json(newPerson)
+    // if (!request.body.name || !request.body.number) {
+    //     return response.status(400).json({
+    //         error: "content missing"
+    //     })
+    // }
+
+    // if (persons.find(person => person.name === request.body.name))  {
+    //     return response.status(400).json({
+    //         error: "name must be unique"
+    //     })
+    // }
+
+    // const newPerson = {
+    //     id: id,
+    //     name: request.body.name,
+    //     number: request.body.number
+    // }
+    // persons.push(newPerson)
+    // console.log(persons)
+    // response.json(newPerson)
 })
 
 const PORT = process.env.PORT || 3001

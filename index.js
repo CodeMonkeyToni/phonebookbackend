@@ -29,9 +29,11 @@ app.use(morgan(function (tokens, req, res) {
 }))
 
 app.get("/api/persons", (request, response) => {
-    Person.find({}).then(result => {
-        response.json(result)
-    })
+    Person.find({})
+        .then(result => {
+            response.json(result)
+        })
+        .catch(error => next(error))
 })
 
 app.get("/api/persons/:id", (request, response, next) => {
@@ -65,6 +67,7 @@ app.post("/api/persons", (request, response) => {
     person.save().then(savedPerson => {
         response.json(savedPerson)
     })
+    .catch(error => next(error))
 })
 
 app.delete("/api/persons/:id", (request, response) => {
@@ -88,6 +91,16 @@ app.put("/api/persons/:id", (request, response, next) => {
         response.json(updatedPerson)
       })
       .catch(error => next(error))
+})
+
+app.get("/info", (request, response, next) => {
+    Person.find({})
+        .then(persons => {
+            const now = new Date()
+            const result = `Phonebook has info for ${persons.length} people      ${now}`
+            response.json(result)
+        })
+        .catch(error => next(error))
 })
 
 const unknownEndpoint = (request, response) => {

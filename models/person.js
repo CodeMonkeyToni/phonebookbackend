@@ -14,13 +14,31 @@ mongoose.connect(url)
     console.log('error connecting to MongoDB:', error.message)
   })
 
+function numberValidator(number) {
+  if (!number.includes("-")) {
+    return false
+  }
+  const parts = number.split("-")
+  if (!(parts[0].length === 2 || parts[0].length === 3)) {
+    return false
+  }
+  return true
+}
+
+const custom = [numberValidator, "Number must contain '-'. Before it there must be 2 or 3 numbers."]
+
 const personSchema = new mongoose.Schema({
     name: {
       type: String,
       minlength: 3,
       required: true
     },
-    number: String,
+    number: {
+      type: String,
+      minlength: 8,
+      required: true,
+      validate: custom
+    }
 })
 
 personSchema.set('toJSON', {
